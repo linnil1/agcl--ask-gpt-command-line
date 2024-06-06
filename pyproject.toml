@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agcl"
+version = "0.1.0"
+description = "Shell-GPT-auto-fix: Fix previous command via gpt"
+authors = [
+    { name="linnil1" }
+]
+dependencies = [
+    "loguru",
+    "openai",
+    "questionary",
+]
+
+[project.scripts]
+agcl = "main:main"
