@@ -2,20 +2,39 @@ import asyncio
 
 from loguru import logger
 from config import ConfigManager
-from interact import create_parser, show_suggestion_and_select, continue_or_exit
+from interact import (
+    NotWanted,
+    create_parser,
+    show_suggestion_and_select,
+    continue_or_exit,
+)
 from history import read_last_log, execute_command
-from suggest import SuggestionType, UserInput, get_gpt_suggestions
+from suggest import (
+    SuggestionType,
+    UserInput,
+    create_exclude_command_message,
+    get_gpt_suggestions,
+)
 
 
 async def query_and_excute(user_input: UserInput, model: str) -> None:
-    suggestion = await get_gpt_suggestions(user_input.create_message(), model)
-    command = await show_suggestion_and_select(suggestion)
-    await execute_command(command)
+    not_wanted_commands = []
+    while True:
+        messages = user_input.create_message()
+        if not_wanted_commands:
+            messages.append(create_exclude_command_message(not_wanted_commands))
+        suggestion = await get_gpt_suggestions(messages, model)
+        try:
+            command = await show_suggestion_and_select(suggestion)
+            await execute_command(command)
+            break
+        except NotWanted as e:
+            not_wanted_commands.extend(suggestion.commands)
 
     await continue_or_exit()
     logfile = ConfigManager().get_log_file()
     with open(logfile) as f:
-        user_input.last_message += "\n" + f.read()
+        user_input.last_message += "\n---\n" + f.read()
     await query_and_excute(user_input, model)
 
 

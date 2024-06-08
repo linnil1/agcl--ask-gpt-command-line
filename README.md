@@ -15,6 +15,9 @@ AGCL leverages the power of GPT/LLM (Large Language Models) to assist users in r
    * AGCL will read the last command and its output (stdout/stderr) and suggest a fix.
    * The process may repeat, with GPT continually suggesting fixes until the issue is resolved or the user stops the process.
 
+3. Other features in `sgpt` will not be implemented, I'm not going to replace it.
+
+
 ## Usage
 
 ### Example1: Asking command with option
@@ -56,3 +59,7 @@ Is problem solved? Yes
 $ python tests/example_bad_script.py
 8
 ```
+
+
+## LICENSE
+MIT

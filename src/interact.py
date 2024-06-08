@@ -5,9 +5,13 @@ from loguru import logger
 from config import ConfigManager, PROGRAM_NAME
 
 
+class NotWanted(Exception):
+    pass
+
+
 async def get_user_choice(choices: list[str]) -> str:
     choice = await questionary.select(
-        "Choose the command:", choices=choices
+        "Choose the command: (CTRL+C to exit)", choices=choices
     ).ask_async()
     if choice not in choices:
         raise ValueError("Invalid choice")
@@ -59,7 +63,12 @@ async def show_suggestion_and_select(suggestion: "Suggestion") -> str:
         logger.debug("No recommanded command needed.")
         print("No recommanded command needed.")
         exit()
-    command = await get_user_choice(suggestion.commands)
+
+    str_not_work = "None of above suggestion works"
+    commands = [*suggestion.commands, str_not_work]
+    command = await get_user_choice(commands)
+    if command == str_not_work:
+        raise NotWanted()
     return command
 
 
