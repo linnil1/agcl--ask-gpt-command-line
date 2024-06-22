@@ -1,8 +1,13 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING
 import argparse
+
 import questionary
 from loguru import logger
 from config import ConfigManager, PROGRAM_NAME
+
+if TYPE_CHECKING:
+    from suggest import Suggestion
 
 
 class NotWanted(Exception):
@@ -10,9 +15,11 @@ class NotWanted(Exception):
 
 
 async def get_user_choice(choices: list[str]) -> str:
-    choice = await questionary.select(
-        "Choose the command: (CTRL+C to exit)", choices=choices
-    ).ask_async()
+    choice = str(
+        await questionary.select(
+            "Choose the command: (CTRL+C to exit)", choices=choices
+        ).ask_async()
+    )
     if choice not in choices:
         raise ValueError("Invalid choice")
     return choice
@@ -44,7 +51,7 @@ def create_parser() -> argparse.ArgumentParser:
 
 
 def get_openai_key() -> str:
-    openai_key = ConfigManager().get("openai_key")
+    openai_key: str = ConfigManager().get("openai_key")
     if openai_key:
         return openai_key
     logger.info("No OPENAI key configured")
@@ -72,7 +79,7 @@ async def show_suggestion_and_select(suggestion: "Suggestion") -> str:
     return command
 
 
-async def continue_or_exit():
+async def continue_or_exit() -> None:
     is_solved = await questionary.confirm("Is problem solved?").ask_async()
     if is_solved:
         exit()

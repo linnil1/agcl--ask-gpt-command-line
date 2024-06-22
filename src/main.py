@@ -18,7 +18,7 @@ from suggest import (
 
 
 async def query_and_excute(user_input: UserInput, model: str) -> None:
-    not_wanted_commands = []
+    not_wanted_commands: list[str] = []
     while True:
         messages = user_input.create_message()
         if not_wanted_commands:

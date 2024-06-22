@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import StrEnum, auto
-import json
 from typing import Any
+import json
 
 from loguru import logger
 from openai import AsyncOpenAI
@@ -65,7 +65,7 @@ class UserInput:
 
     def create_message(self) -> list[ChatCompletionMessageParam]:
         if self.suggestion_type == SuggestionType.ASK:
-            messages = [
+            messages: list[ChatCompletionMessageParam] = [
                 {
                     "role": "system",
                     "content": PROMPT_ASK,
@@ -126,7 +126,7 @@ async def get_gpt_suggestions(
     logger.debug(response)
     if not message.tool_calls:
         return Suggestion(
-            description=message.content,
+            description=message.content or "",
             commands=[],
         )
 
@@ -141,7 +141,7 @@ async def get_gpt_suggestions(
     )
 
 
-def create_exclude_command_message(commands):
+def create_exclude_command_message(commands: list[str]) -> ChatCompletionMessageParam:
     return {
         "role": "user",
         "content": "Below command are not valid or not wanted by user:\n"

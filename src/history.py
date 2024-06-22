@@ -1,11 +1,12 @@
 import os
 import sys
-import distro
+import pwd
 import asyncio
 import platform
 from enum import StrEnum, auto
-from typing import AsyncIterator, TextIO
+from typing import TextIO
 
+import distro
 from loguru import logger
 from config import ConfigManager, PROGRAM_NAME
 
@@ -18,8 +19,16 @@ class Shell(StrEnum):
     UNKNOWN = auto()
 
 
-def get_platform():
+def get_platform() -> str:
     return platform.platform() + " " + distro.name(pretty=True)
+
+
+def get_username() -> str:
+    try:
+        return os.getlogin()
+    except:
+        pass
+    return pwd.getpwuid(os.getuid()).pw_name
 
 
 def get_history_file(shell: Shell) -> str:
@@ -34,32 +43,38 @@ def get_history_file(shell: Shell) -> str:
     return ""
 
 
-async def get_shell_name():
-    result = await asyncio.create_subprocess_shell(f'ps -p {os.getppid()} -o comm=', stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+async def get_shell_name() -> Shell:
+    result = await asyncio.create_subprocess_shell(
+        f"ps -p {os.getppid()} -o comm=",
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
     stdout, stderr = await result.communicate()
     if result.returncode != 0:
         return Shell.ASH
-    shell_name = stdout.decode().strip().split('/')[-1].lower()
+    shell_name = stdout.decode().strip().split("/")[-1].lower()
     for shell in Shell:
         if shell.value == shell_name and os.path.exists(get_history_file(shell)):
-            return shell_name
+            return shell
     return Shell.UNKNOWN
 
 
 async def get_last_command(shell: Shell) -> str:
     with open(get_history_file(shell), "rb") as file:
-        history = file.readlines()
-        history = history[-2]  # -1 is the current command
-        history = history.strip().decode()
+        history_list = file.readlines()
+        history_raw = history_list[-2]  # -1 is the current command
+        history = history_raw.strip().decode()
         if shell == Shell.ZSH and ";" in history:
-            history = history.split(';', 1)[1]
+            history = history.split(";", 1)[1]
         return history
 
 
 async def read_last_log() -> str:
     shell = await get_shell_name()
     if shell == Shell.UNKNOWN:
-        logger.error("Unknown shell, cannot read history. You may use `agcl run xxxx` to temporary fix it.")
+        logger.error(
+            "Unknown shell, cannot read history. You may use `agcl run xxxx` to temporary fix it."
+        )
         exit()
     last_command = await get_last_command(shell)
     if not last_command.startswith(PROGRAM_NAME):
@@ -75,7 +90,7 @@ async def read_last_log() -> str:
 
 
 async def read_stream(
-    stream: AsyncIterator[bytes], log: TextIO, stream_name: str
+    stream: asyncio.StreamReader, log: TextIO, stream_name: str
 ) -> None:
     screen = sys.stdout if stream_name == "stdout" else sys.stderr
     while True:
@@ -93,7 +108,7 @@ async def execute_command(command: str) -> None:
     with open(logfile, "w") as log:
         log.write(f"Platform: {get_platform()}\n")
         log.write(f"Current Directory: {os.getcwd()}\n")
-        log.write(f"Current User: {os.getlogin()}\n")
+        log.write(f"Current User: {get_username()}\n")
         log.write(f"Command: {command}\n")
         log.write(f"Message:\n")
 
@@ -101,6 +116,8 @@ async def execute_command(command: str) -> None:
         process = await asyncio.create_subprocess_shell(
             command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
+        assert process.stdout
+        assert process.stderr
 
         await asyncio.gather(
             read_stream(process.stdout, log, "stdout"),
