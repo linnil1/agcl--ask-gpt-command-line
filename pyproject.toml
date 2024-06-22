@@ -13,6 +13,7 @@ dependencies = [
     "loguru",
     "openai",
     "questionary",
+    "distro",
 ]
 
 [project.scripts]

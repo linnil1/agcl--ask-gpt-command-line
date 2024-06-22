@@ -135,7 +135,7 @@ async def get_gpt_suggestions(
         raise ValueError("GPT give empty result")
 
     return Suggestion(
-        description=data["description"],
+        description=data.get("description", ""),
         commands=data["recommendations"],
         last_message=message,
     )
