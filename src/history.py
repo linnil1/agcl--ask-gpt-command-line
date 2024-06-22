@@ -69,13 +69,18 @@ async def get_last_command(shell: Shell) -> str:
         return history
 
 
+def read_saved_log() -> str:
+    logfile = ConfigManager().get_log_file()
+    with open(logfile) as f:
+        return f.read()
+
+
 async def read_last_log() -> str:
     shell = await get_shell_name()
     if shell == Shell.UNKNOWN:
-        logger.error(
-            "Unknown shell, cannot read history. You may use `agcl run xxxx` to temporary fix it."
-        )
-        exit()
+        err_text = "Unknown shell OR Cannot read history!"
+        logger.error(err_text)
+        raise ValueError(err_text)
     last_command = await get_last_command(shell)
     if not last_command.startswith(PROGRAM_NAME):
         logger.info(
@@ -84,9 +89,7 @@ async def read_last_log() -> str:
         )
         await execute_command(last_command)
 
-    logfile = ConfigManager().get_log_file()
-    with open(logfile) as f:
-        return f.read()
+    return read_saved_log()
 
 
 async def read_stream(

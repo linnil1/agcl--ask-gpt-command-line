@@ -16,7 +16,15 @@ AGCL leverages the power of GPT/LLM (Large Language Models) to assist users in r
    * The process may repeat, with GPT continually suggesting fixes until the issue is resolved or the user stops the process.
 
 3. Other features in `sgpt` will not be implemented, I'm not going to replace it.
+4. Support shell: `zsh`, `bash`, `sh` and not work if your history is not in the default path `~/.xx_history`.
 
+
+## Install
+```bash
+$ pip install git+https://github.com/linnil1/agcl--ask-gpt-command-line
+$ agcl
+usage: agcl [-h] [--debug] [--model MODEL] {run,ask,fix} ...
+```
 
 ## Usage
 

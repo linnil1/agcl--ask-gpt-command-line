@@ -4,11 +4,12 @@ from loguru import logger
 from config import ConfigManager
 from interact import (
     NotWanted,
+    is_solved,
+    is_using_run_before,
     create_parser,
     show_suggestion_and_select,
-    continue_or_exit,
 )
-from history import read_last_log, execute_command
+from history import read_last_log, execute_command, read_saved_log
 from suggest import (
     SuggestionType,
     UserInput,
@@ -31,11 +32,21 @@ async def query_and_excute(user_input: UserInput, model: str) -> None:
         except NotWanted as e:
             not_wanted_commands.extend(suggestion.commands)
 
-    await continue_or_exit()
+    if await is_solved():
+        exit()
     logfile = ConfigManager().get_log_file()
     with open(logfile) as f:
         user_input.last_message += "\n---\n" + f.read()
     await query_and_excute(user_input, model)
+
+
+async def get_last_log() -> str:
+    try:
+        return await read_last_log()
+    except ValueError:
+        if not await is_using_run_before():
+            exit()
+        return read_saved_log()
 
 
 async def main_async() -> None:
@@ -54,7 +65,7 @@ async def main_async() -> None:
     elif args.subcommand == "fix":
         user_input = UserInput(
             SuggestionType.FIX,
-            last_message=await read_last_log(),
+            last_message=await get_last_log(),
         )
         await query_and_excute(user_input, args.model)
 

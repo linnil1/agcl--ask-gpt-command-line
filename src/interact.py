@@ -71,7 +71,7 @@ async def show_suggestion_and_select(suggestion: "Suggestion") -> str:
         print("No recommanded command needed.")
         exit()
 
-    str_not_work = "None of above suggestion works"
+    str_not_work = "none of above suggestion works"
     commands = [*suggestion.commands, str_not_work]
     command = await get_user_choice(commands)
     if command == str_not_work:
@@ -79,7 +79,10 @@ async def show_suggestion_and_select(suggestion: "Suggestion") -> str:
     return command
 
 
-async def continue_or_exit() -> None:
-    is_solved = await questionary.confirm("Is problem solved?").ask_async()
-    if is_solved:
-        exit()
+async def is_solved() -> bool:
+    return bool(await questionary.confirm("Is problem solved?").ask_async())
+
+
+async def is_using_run_before() -> bool:
+    text = f"Did you use `{PROGRAM_NAME} run {{Your failed command}}`?"
+    return bool(await questionary.confirm(text).ask_async())

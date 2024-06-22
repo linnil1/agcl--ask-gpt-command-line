@@ -1,9 +1,8 @@
 import pytest
 import asyncio
 
-from config import ConfigManager
 import history
-from history import read_last_log, execute_command
+from history import read_last_log, execute_command, read_saved_log
 from suggest import (
     SuggestionType,
     UserInput,
@@ -16,8 +15,8 @@ from suggest import (
 async def test_run():
     command = "echo 123".split(" ")
     await execute_command(" ".join(command))
-    with open(ConfigManager().get_log_file()) as f:
-        assert f.read().endswith("Message:\n123\n")
+    log = read_saved_log()
+    assert log.endswith("Message:\n123\n")
 
 
 @pytest.mark.asyncio
